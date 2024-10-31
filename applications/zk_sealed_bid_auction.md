@@ -1,4 +1,4 @@
-# SilentBid - Bringing Sealed-Bid Auctions On-Chain
+# SilentBid: On-Chain Sealed-Bid Auctions
 
 ## [Section 1] Project Information
 
@@ -10,111 +10,107 @@
 
 ### Brief Description
 
-**SilentBid** is a [**Sealed-Bid Auction**](https://www.investopedia.com/terms/s/sealed-bid-auction.asp) platform built using the
-**Plonky3** toolkit. The project aims to facilitate secure and private auctions by leveraging **zero-knowledge proofs (ZKPs)** to
-determine the highest bidder without revealing individual bid amounts. This ensures both privacy and fairness in the bidding process.
+**SilentBid** is an [**on-chain sealed-bid auction platform**](https://www.investopedia.com/terms/s/sealed-bid-auction.asp) developed
+using the **Plonky3** toolkit. It enables secure, private auctions by leveraging **zero-knowledge proofs (ZKPs)** to determine the
+highest bidder without disclosing individual bids. This ensures both privacy and fairness in the auction process.
 
-Additionally, **SilentBid** serves as a **reference model** for developers interested in building decentralized applications (dApps)
-using **Plonky3** and **ZKPs**.
+SilentBid also serves as a **reference model** for developers building decentralized applications (dApps) with **Plonky3** and **ZKPs
+**.
 
 ### Core Idea
 
-At the bidding phase, bidders submit encrypted bids to a smart contract, which only the auction owner can decrypt using their secret 
-key. Then in opening phase, the owner publishes the decrypted bid amounts and also the ZK proof of the decryption process, including 
-the hash of all the inputs. Finally, the smart contract will verify the proof, compute and publish the winner.
+1. **Bid Phase**: Bidders submit encrypted bids to a smart contract. Only the auction owner can decrypt these bids with their secret
+   key.
+2. **Open Phase**: The auction owner decrypts and publishes bid amounts alongside a ZK proof of the decryption process, including a
+   hash of the inputs.
+3. **Verification**: The smart contract verifies the ZK proof, computes, and publicly announces the winner.
 
-Key components of the project include:
+#### Key Components
 
-- **Proving Service**: Powered by **Plonky3**, this service generates a **zero-knowledge proof** from the execution trace of a program
-  that decrypts bids, while preserving the confidentiality of owner's private
-  key.
-- **Smart Contract**: The smart contract verifies the ZK proof, computes the winner and manages the entire auction lifecycle, including setup, bidding, and
-  settlement.
+- **Proving Service**: Uses **Plonky3** to generate a zero-knowledge proof of bid decryption, preserving the confidentiality of the
+  owner's private key.
+- **Smart Contract**: Manages the auction lifecycle, including setup, bid collection, proof verification, and determining the winner.
 
 ### Technology Stack
 
 - **Smart Contract**: Solidity
 - **Circuit**: Rust, Plonky3
-- **Encrypt/Decrypt**: RSA 32-bit
-- **Hash function:** Rolling Hash
+- **Encryption/Decryption**: RSA (32-bit)
+- **Hash Function**: Rolling Hash
 
 ### Design Mockups/Prototypes (Optional)
 
-The core logic of **SilentBid** operates on-chain, while off-chain processes handle the decryption and proof generation. The
-auction process follows four main phases:
+The auction process is split into on-chain and off-chain phases:
 
-1. **Initial Setup**: The auction owner creates the auction, sets the required deposit amount, transfers assets to the smart contract,
-   and defines the auction's start and end times.
-2. **Bid Phase**: Bidders submit their bids to the smart contract by depositing the required amount.
-3. **Open Phase**: After the bidding window closes, the auction owner decrypts the bids and generates a zero-knowledge proof.
-4. **Verify Phase**: The owner submits the decrypted bids and the proof to the smart contract for verification. The smart contract then computes and publishes the winner.
+1. **Setup Phase**: Auction owner initializes the auction, specifies deposit requirements, sets start and end times, and transfers
+   assets to the contract.
+2. **Bid Phase**: Bidders submit their encrypted bids and deposit the required amount.
+3. **Open Phase**: Owner decrypts bids, generating a zero-knowledge proof.
+4. **Verification Phase**: Owner submits the proof and decrypted bids to the contract, which verifies the winner.
 
-**Sequence diagrams for each module are shown below:**
-
-#### Auction Flow:
+#### Auction Flow
 
 ![auction_flow](./images/zk_sealed_bid_auction/architecture.png)
 
 ### Challenges
 
-Currently, the field allowed in the constraints is `AbstractField`, which has a maximum size of 64 bits (if we use Goldilocks). 
-However, we want to use a 256-bit curve for encryption/decryption, or, if we use RSA, the required bit size is 1024 bits. To implement 
-this in Plonky3, we need to break numbers into smaller parts, which is very complex.
-Another issue is that Plonky3 only supports basic operations, like addition, subtraction, and multiplication, in the cell 
-values of the execution trace, which are insufficient for the decryption phase.
+Current field constraints in Plonky3 are limited to `AbstractField` (64 bits, such as Goldilocks). We require 256-bit encryption, or
+1024-bit RSA, for robust security, necessitating a breakdown of larger numbers into manageable parts—a complex process. Plonky3
+supports only basic operations (addition, subtraction, multiplication), which limits its application in decryption phases.
 
-Therefore, we decided to use a simplified version for encryption/decryption and also for the hash function. We use RSA with 32 bits and 
-a Rolling Hash, both of which fit within the field size. We believe that this simplified version does not affect the purpose of our project, as it serves as a reference structure and provides insights into where Plonky3 is suitable and where it may have limitations.
+To address this, we've opted for a simplified version using 32-bit RSA and a Rolling Hash. While simplified, this solution effectively
+demonstrates Plonky3's strengths and limitations for future projects.
+
 ## [Section 3] Ecosystem Fit
 
 ### Similar Projects
 
-Several research papers have explored sealed-bid auctions on the blockchain,
-including [Anonymous Fair Auction on Blockchain](https://ieeexplore.ieee.org/document/9432664)
-and [A Blockchain-Based Sealed-Bid e-Auction Scheme with Smart Contract and Zero-Knowledge Proof](https://www.researchgate.net/publication/351717293_A_Blockchain-Based_Sealed-Bid_e-Auction_Scheme_with_Smart_Contract_and_Zero-Knowledge_Proof).
-However, these solutions often assume the verifier holds both a private and public key, which is impractical for smart contracts.
-Projects like [AuctionContract](https://github.com/HSG88/AuctionContract) focus on developing business logic inside a smart contract
-but do not provide a complete solution for secure and private auctions.
+Research on blockchain-based sealed-bid auctions includes:
+
+- [Anonymous Fair Auction on Blockchain](https://ieeexplore.ieee.org/document/9432664)
+- [Blockchain-Based Sealed-Bid e-Auction with Smart Contracts & ZKPs](https://www.researchgate.net/publication/351717293_A_Blockchain-Based_Sealed-Bid_e-Auction_Scheme_with_Smart_Contract_and_Zero-Knowledge_Proof)
+
+These typically assume the verifier holds both private and public keys, which is impractical for smart contracts. Projects
+like [AuctionContract](https://github.com/HSG88/AuctionContract) develop business logic within a smart contract but lack full security
+and privacy solutions.
 
 ### Unique Contribution
 
-**SilentBid** provides a **practical reference** for developers aiming to build **ZK-based dApps**, demonstrating how **Plonky3**can
-address real-world problems.
+SilentBid provides a **practical reference** for developers building **ZK-based dApps**, showcasing how **Plonky3** can address
+real-world privacy needs.
 
 ## [Section 4] Team :busts_in_silhouette:
 
-- **Team Members:** We are part of [SotaZK Labs](https://sotazk.org/), a team focused on pioneering zero-knowledge solutions to enhance
-  security and privacy in the decentralized world.
+- **Team Members**: [SotaZK Labs](https://sotazk.org/) - focused on enhancing security and privacy through zero-knowledge solutions.
 - **Number of Members**: 7
-- **Contact Information:**
-    - **Name:** Steve Nguyen
-    - **Email:** zk.steve.nguyen@gmail.com
-    - **Telegram:** @zk_steve
+- **Contact Information**:
+    - **Name**: Steve Nguyen
+    - **Email**: zk.steve.nguyen@gmail.com
+    - **Telegram**: @zk_steve
 - **Prior Work/Research (Optional):**
-    - [ZKP Documentation](https://github.com/sota-zk-labs/zkp-documents): A repository dedicated to demystifying zero-knowledge proof
-      technology, including KZG, GKR, FRI, Plonk, Groth16, lattice-based commitment schemes, sum-check protocol, Nova, EIP-4844, etc.
-    - [ZKP Implementation](https://github.com/sota-zk-labs/zkp-implementation): Various ZKP protocols, including KZG, FRI, and Plonk.
-    - [Apstark](https://github.com/sota-zk-labs/apstark): A layer 2 ZK rollup blockchain built on the Aptos network using the Starknet
-      tech stack.
+    - [ZKP Documentation](https://github.com/sota-zk-labs/zkp-documents): Covers KZG, GKR, FRI, Plonk, Groth16, lattice-based
+      commitments,
+      and more.
+    - [ZKP Implementation](https://github.com/sota-zk-labs/zkp-implementation): Includes protocols such as KZG, FRI, and Plonk.
+    - [Apstark](https://github.com/sota-zk-labs/apstark): A Layer 2 ZK rollup on the Aptos network using Starknet.
 
 ## [Section 5] Development Roadmap :open_book:
 
 > **Important:** The maximum project duration is 6 weeks. Milestones and timelines are outlined accordingly.
 
-### Milestone 1 — Basic Functionality
+### Milestone 1 — Core Functionality
 
-- **Estimated Duration:** 4 weeks
-- **Description:** Implement the core functionalities, including the smart contract with auction and verification features, and the
-  proving service on the client side.
-- **FTE (Full-Time Equivalent):** 4 FTE
-- **Costs:** 4,000 USDC
+- **Duration**: 4 weeks
+- **Scope**: Develop the core smart contract, auction functionality, and client-side proving service.
+- **FTE (Full-Time Equivalent)**: 4
+- **Budget**: 4,000 USDC
 
-### Milestone 2 — Additional Features
+### Milestone 2 — Enhancements
 
-- **Estimated Duration:** 2 weeks
-- **Description:** Refine the code, fix bugs, and create tutorials (documents and videos) for developers.
-- **FTE:** 4 FTE
-- **Costs:** 2,500 USDC
+- **Duration**: 2 weeks
+- **Scope**: Code refinement, bug fixes, and developer documentation/tutorials.
+- **FTE**: 4
+- **Budget**: 2,500 USDC
 
 ### Total Costs: 6,500 USDC
 
@@ -122,6 +118,5 @@ address real-world problems.
 
 ### Future Plans
 
-Post-development, we plan to integrate additional auction types, such as **Unique Lowest Bid Auctions** and **Dutch Auctions**. We also
-aim to collaborate with other **dApps**, potentially with **DeFi platforms**, to allow for automatic asset management following auction
-outcomes.
+After this project, we plan to implement additional auction types, such as **Unique Lowest Bid** and **Dutch Auctions**. We also aim to
+integrate with other **dApps** and explore partnerships with **DeFi platforms** to support automatic asset management post-auction.
